@@ -858,7 +858,7 @@ proc sql;
 	create table row43 as
 	select "CFI score, mean (SD)" as description format=$256.
 		, mean(cfi_score) as freq_&suffix.
-		, std(cfi_score) / &n. as pct_&suffix.
+		, std(cfi_score) as pct_&suffix.
 	from cohort
     where &exposure. in(&exp_val.)
 	;

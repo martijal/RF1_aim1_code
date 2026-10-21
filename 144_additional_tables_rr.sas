@@ -334,12 +334,26 @@ data cohort_3mo;
 			days_to_death_ndi = intck("days", index_date, ndi_death_dt);
 			days_follow_up = intck("days", index_date, ndi_death_dt);
 		end;
+        else do;
+            cod = 0;
+        end;
 	end;
 
 	where ruca3cat ^= 99;
 run;
 
 proc contents data=cohort_3mo; run;
+
+proc freq data=cohort_3mo;
+    title "check cod outside range of follow-up - cohort_3mo";
+    tables cod / missing;
+    where days_follow_up >= 90;
+run;
+
+proc freq data=cohort_3mo;
+    title "check cod outside range of follow-up - cohort_3mo";
+    tables cod / missing;
+run;
 
 proc sort data=cohort_3mo; by death_post_ndi; run;
 proc means data=cohort_3mo;
@@ -392,10 +406,11 @@ run;
 
 %mend;
 
-%test_cod(high_rain_by_wind_time, cohort_3mo)
+/*%test_cod(high_rain_by_wind_time, cohort_3mo)*/
 
 
-data SH070617.all_storms_first_elig_3mo (keep=bene_id days_follow_up cod high_rain_by_wind_time age male race4c cfi_score_no_adrd dual_pre ffs_pre ruca3cat zip_year _geo_match_id);
+data SH070617.all_storms_first_elig_3mo (keep=bene_id days_follow_up cod high_rain_by_wind_time 
+    z_all_high_wind_time z_all_high_prcp age male race4c cfi_score_no_adrd dual_pre ffs_pre ruca3cat zip_year);
     set cohort_3mo;
 run;
 
@@ -403,5 +418,48 @@ run;
 proc export data=SH070617.all_storms_first_elig_3mo 
 	dbms=xlsx
 	outfile="/sas/vrdc/users/jma617/files/dua_070617_jma617/results/all_storms_first_elig_3mo.xlsx"
+	replace;
+run;
+
+
+
+data SH070617.all_storms_first_elig_1mo
+    (keep=bene_id days_follow_up cod high_rain_by_wind_time z_all_high_wind_time z_all_high_prcp 
+    age male race4c cfi_score_no_adrd dual_pre ffs_pre ruca3cat zip_year
+    );
+    set SH070617.all_storms_first_elig;
+
+    days_follow_up = 30;
+    death_post_ndi = 0;
+    days_to_death_ndi = 0;
+
+    if ndi_death_dt ^= . then do;
+		if (ndi_death_dt >= index_date) and (ndi_death_dt <= index_date + 30) then do;
+			death_post_ndi = 1;
+			days_to_death_ndi = intck("days", index_date, ndi_death_dt);
+			days_follow_up = intck("days", index_date, ndi_death_dt);
+		end;
+        else do;
+            cod = 0;
+        end;
+	end;
+
+	where ruca3cat ^= 99;
+run;
+
+proc freq data=SH070617.all_storms_first_elig_1mo;
+    title "check cod outside range of follow-up - cohort_1mo";
+    tables cod / missing;
+    where days_follow_up >= 30;
+run;
+
+proc freq data=SH070617.all_storms_first_elig_1mo;
+    title "check cod outside range of follow-up - cohort_1mo";
+    tables cod / missing;
+run;
+
+proc export data=SH070617.all_storms_first_elig_1mo 
+	dbms=xlsx
+	outfile="/sas/vrdc/users/jma617/files/dua_070617_jma617/results/all_storms_first_elig_1mo.xlsx"
 	replace;
 run;
